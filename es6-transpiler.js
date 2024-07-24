@@ -564,6 +564,12 @@ const transpile = {
               importString = `import '${resolvedPath}';`
               break;
             }
+            case 'TGALoader': {
+              const modulePath = 'shims/three/TGALoader.js'
+              const resolvedPath = path.relative(path.dirname(filepath), modulePath)
+              importString = `import '${resolvedPath}';`
+              break;
+            }
             default: {
               logError('unknown external dependency', dep, { filepath, externalDeps })
               return undefined
