@@ -33,16 +33,16 @@ ROS3D.Viewer = function(options) {
   var elem = options.elem;
   var width = options.width;
   var height = options.height;
-  var background = options.background || '#cccccc';
+  var background = options.background || '#ffffff';
   var antialias = options.antialias;
-  var intensity = options.intensity || 0.8;
+  var intensity = options.intensity || 2.5;
   var near = options.near || 0.01;
   var far = options.far || 1000;
   var alpha = options.alpha || 1.0;
   var cameraPosition = options.cameraPose || {
     x : 3,
     y : 3,
-    z : 3
+    z : 7
   };
   var cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
   var displayPanAndZoomFrame = (options.displayPanAndZoomFrame === undefined) ? true : !!options.displayPanAndZoomFrame;
@@ -56,7 +56,7 @@ ROS3D.Viewer = function(options) {
   this.renderer.setClearColor(parseInt(background.replace('#', '0x'), 16), alpha);
   this.renderer.sortObjects = false;
   this.renderer.setSize(width, height);
-  this.renderer.shadowMap.enabled = false;
+  this.renderer.shadowMap.enabled = true;
   this.renderer.autoClear = false;
 
   // create the global scene
@@ -77,7 +77,6 @@ ROS3D.Viewer = function(options) {
   this.cameraControls.userZoomSpeed = cameraZoomSpeed;
 
   // lights
-  this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
   this.directionalLight = new THREE.DirectionalLight(0xffffff, intensity);
   this.scene.add(this.directionalLight);
 
@@ -118,6 +117,7 @@ ROS3D.Viewer.prototype.start = function(){
 /**
  * Renders the associated scene to the viewer.
  */
+
 ROS3D.Viewer.prototype.draw = function(){
   if(this.stopped){
     // Do nothing if stopped
@@ -127,12 +127,16 @@ ROS3D.Viewer.prototype.draw = function(){
   // update the controls
   this.cameraControls.update();
 
-  // put light to the top-left of the camera
-  // BUG: position is a read-only property of DirectionalLight,
-  // attempting to assign to it either does nothing or throws an error.
-  // this.directionalLight.position = this.camera.localToWorld(new THREE.Vector3(-1, 1, 0));
-  // this.directionalLight.position.normalize();
+  // Update the directional light position to follow the camera
+  this.directionalLight.position.copy(this.camera.position);
+  this.directionalLight.position.add(new THREE.Vector3(0, 1, 1));  // Adjust this vector for light offset
 
+  // Set up the directional light to cast shadows
+  this.directionalLight.castShadow = true;
+  this.directionalLight.shadow.mapSize.width = 2024;
+  this.directionalLight.shadow.mapSize.height = 1024;
+  this.directionalLight.shadow.bias = -0.005;  // Prevents shadow acne (shadow artifacts)
+  this.directionalLight.shadow.radius = 5;  // Larger radius creates softer shadows
   // set the scene
   this.renderer.clear(true, true, true);
   this.renderer.render(this.scene, this.camera);
